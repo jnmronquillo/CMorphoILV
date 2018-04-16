@@ -48,6 +48,7 @@ static void print_buf(const char *title, const unsigned char *buf, size_t buf_le
 VOID testWinusbPING(DEVICE_DATA deviceData, PIPE_ID pipeid);
 VOID testWinusbFINGER(DEVICE_DATA deviceData, PIPE_ID pipeid);
 VOID testWinusbVERIFY(DEVICE_DATA deviceData, PIPE_ID pipeid);
+VOID testWinusbVERIFY_MATCH(DEVICE_DATA deviceData, PIPE_ID pipeid);
 VOID getFingerPrint(DEVICE_DATA deviceData, PIPE_ID pipeid);
 VOID int2array(int i, UCHAR *arr);
 VOID short2array(short i, UCHAR *arr);
@@ -55,3 +56,4 @@ BOOL sendILV(WINUSB_INTERFACE_HANDLE hDeviceHandle, UCHAR* pID, ULONG* pcbWritte
 VOID processILV(UCHAR * buffer, int size, int offset, BOOL *imageProcessed, BOOL *pckProcessed);
 void pipe_policy(DEVICE_DATA deviceData, PIPE_ID pipeid);
 VOID sendVerify(DEVICE_DATA deviceData, PIPE_ID pipeid, UCHAR * reference_template_1, short L1);
+VOID sendVerifyMatch(DEVICE_DATA deviceData, PIPE_ID pipeid, UCHAR * search_template, short Ls, UCHAR * reference_template_1, short L1);

@@ -109,8 +109,9 @@ Routine description:
         }
     }
     //testWinusbPING(deviceData, pipeid);
-    testWinusbFINGER(deviceData, pipeid);
+    //testWinusbFINGER(deviceData, pipeid);
     //testWinusbVERIFY(deviceData, pipeid);
+    testWinusbVERIFY_MATCH(deviceData, pipeid);
     //getFingerPrint(deviceData, pipeid); //just sent ilv do not read
     //pipe_policy(deviceData, pipeid);
     CloseDevice(&deviceData);
@@ -119,11 +120,13 @@ Routine description:
     return 0;
 }
 
-char* PATH_PKC_FILE = "C:/Users/jrojas/Pictures/2019/April/1_fingerprint.pkc";
-char* PATH_IMAGE_FILE = "C:/Users/jrojas/Pictures/2019/April/1_fingerprint.raw";
-char* PATH_BMP_FILE = "C:/Users/jrojas/Pictures/2019/April/1_fingerprint.bmp";
+char* PATH_PKC_FILE = "C:/Users/jrojas/Pictures/2019/April/22_fingerprint.pkc";
+char* PATH_IMAGE_FILE = "C:/Users/jrojas/Pictures/2019/April/22_fingerprint.raw";
+char* PATH_BMP_FILE = "C:/Users/jrojas/Pictures/2019/April/22_fingerprint.bmp";
 
-char* PATH_PKC_FILE_VERIFY = "C:/Users/jrojas/Documents/jm/fuentes_zt/pruebas/Windows-Biometric-Framework-FingerPrint-Example/data/template_2018.4.11.20.43.20.597.pkc";
+//char* PATH_PKC_FILE_VERIFY = "C:/Users/jrojas/Documents/jm/fuentes_zt/pruebas/Windows-Biometric-Framework-FingerPrint-Example/data/template_2018.4.11.20.43.20.597.pkc";
+char* PATH_PKC_FILE_VERIFY = "C:/Users/jrojas/Pictures/2019/April/1_fingerprint.pkc";
+char* PATH_PKC_FILE_VERIFY_MATCH = "C:/Users/jrojas/Pictures/2019/April/2_fingerprint.pkc";
 
 void pipe_policy(DEVICE_DATA deviceData, PIPE_ID pipeid)
 {
@@ -497,6 +500,95 @@ VOID sendVerify(DEVICE_DATA deviceData, PIPE_ID pipeid, UCHAR * reference_templa
 
 }
 
+VOID sendVerifyMatch(DEVICE_DATA deviceData, PIPE_ID pipeid, UCHAR * search_template, short Ls, UCHAR * reference_template_1, short L1)
+{
+    short longitud = 2 + (3 + Ls) + (3 + L1) + 4;
+    short matching_threshold = 5;//Value range: 1 to 9. Recommanded value: 5
+    UCHAR template_format = 0x02;//ID_PKCOMP (0x02)
+
+    //util vars
+    UCHAR idEvent = 0x00;
+    short size = 0;
+    UCHAR command = 0x00;
+    UCHAR arr_idEvent[] = { 0x00 };
+
+    //0x23 : ILV_VERIFY_MATCH
+    //I
+    int cbSize = 1;
+    UCHAR *data = (UCHAR*)malloc(cbSize);
+    UCHAR arr_start[] = { 0x23 };
+    memcpy(data, arr_start, 1);
+    //L
+    data = (UCHAR*)realloc(data, cbSize += 2);
+    UCHAR arr_longitud[2];
+    short2array(longitud, arr_longitud);
+    memcpy(data + cbSize - 2, arr_longitud, 2);
+    //V
+    //Matching Threshold 
+    data = (UCHAR*)realloc(data, cbSize += 2);
+    UCHAR arr_threshold[2];
+    short2array(matching_threshold, arr_threshold);
+    memcpy(data + cbSize - 2, arr_threshold, 2);
+    
+    //Search Template 
+    data = (UCHAR*)realloc(data, cbSize += 1);
+    UCHAR arr_format[] = { template_format };
+    memcpy(data + cbSize - 1, arr_format, 1);
+
+    data = (UCHAR*)realloc(data, cbSize += 2);
+    UCHAR arr_size[2];
+    short2array(Ls, arr_size);
+    memcpy(data + cbSize - 2, arr_size, 2);
+
+    data = (UCHAR*)realloc(data, cbSize += Ls);
+    memcpy(data + cbSize - Ls, search_template, Ls);
+
+    //Reference Template # 1 
+    data = (UCHAR*)realloc(data, cbSize += 1);
+    //UCHAR arr_format[] = { template_format };
+    arr_format[0] = template_format;
+    memcpy(data + cbSize - 1, arr_format, 1);
+
+    data = (UCHAR*)realloc(data, cbSize += 2);
+    //UCHAR arr_size[2];
+    short2array(L1, arr_size);
+    memcpy(data + cbSize - 2, arr_size, 2);
+
+    data = (UCHAR*)realloc(data, cbSize += L1);
+    memcpy(data + cbSize - L1, reference_template_1, L1);
+    
+    //Matching Score required ILV
+    idEvent = 0x56; //ID_MATCHING_SCORE
+    size = 1;
+    command = 0x01; //other than 0x00 (default): Return of Matching score value is required
+
+    data = (UCHAR*)realloc(data, cbSize += 1);
+    arr_idEvent[0] = idEvent;
+    memcpy(data + cbSize - 1, arr_idEvent, 1);
+
+    data = (UCHAR*)realloc(data, cbSize += 2);
+    //UCHAR arr_size[2];
+    short2array(size, arr_size);
+    memcpy(data + cbSize - 2, arr_size, 2);
+
+    data = (UCHAR*)realloc(data, cbSize += 1);
+    UCHAR arr_command_one[] = { command };
+    memcpy(data + cbSize - 1, arr_command_one, 1);
+
+    //sendILV
+    ULONG pcbWritten;
+
+    if (!sendILV(deviceData.WinusbHandle[1], &pipeid.PipeOutId, &pcbWritten, data, cbSize))
+    {
+        wprintf(L"Failed to write to outPipe");
+    }
+    else {
+
+    }
+    free(data);
+
+}
+
 VOID getFingerPKCOMP(DEVICE_DATA deviceData, PIPE_ID pipeid)
 {
     short longitud = 8 + 4 + 9 + 4;
@@ -855,6 +947,73 @@ VOID testWinusbVERIFY(DEVICE_DATA deviceData, PIPE_ID pipeid) {
     CloseHandle(myhandleB);
 }
 
+VOID testWinusbVERIFY_MATCH(DEVICE_DATA deviceData, PIPE_ID pipeid) {
+
+    //UCHAR data[] = { 0x08, 0x01, 0x00, 0x02 };
+
+    ///ULONG pcbWritten;
+
+    //The size of the returned image depends on the MorphoSmart™ device:
+    //  416 x 416 pixels for the MorphoSmart™ MSO(173056 bytes when not compressed)
+    //  400 x 256 pixels for the MorphoSmart™ CBM(102400 bytes when not compressed)
+    //  400 x 400 pixels for the MorphoSmart™ FINGER VP(160000 bytes when not compressed)
+    //VERIFY
+    //The MorphoSmart™ FINGER VP does not support fingerprint reference template without a specific license. For more information, please contact Idemia.
+
+    //reading start before writting
+    myparams_obj.hDeviceHandle = deviceData.WinusbHandle[1];
+    myparams_obj.pID = &pipeid.PipeInId;
+    myparams_obj.cbSize = 262144;//MAXIMUM_TRANSFER_SIZE Winusb policy PipeIn:262144 // 102446;//2048;//1024;// MAX_DATA_SIZE//mas o menos bytes a leer (siempre lee)
+    myparams_obj.imageProcessed = FALSE;
+    myparams_obj.pkcProcessed = FALSE;
+
+    HANDLE myhandleB;
+    myhandleB = (HANDLE)_beginthreadex(0, 0, &read_fingerprint, &myparams_obj, 0, 0);
+
+    //writting
+    //getFingerPrint(deviceData, pipeid);
+    //getFingerPKCOMP(deviceData, pipeid);
+
+    CHAR * l_cs_File = PATH_PKC_FILE_VERIFY;
+    CHAR * l_cs_File_2 = PATH_PKC_FILE_VERIFY_MATCH;
+
+    //CFile raw(l_cs_File);
+    //raw.write(huella, lenght);
+    //raw.close();
+
+    std::ifstream fin(l_cs_File);
+    // get pointer to associated buffer object
+    std::filebuf* pbuf = fin.rdbuf();
+    // get file size using buffer's members
+    std::size_t size = pbuf->pubseekoff(0, fin.end, fin.in);
+    printf("\n size: %d \n", (int)size);
+    pbuf->pubseekpos(0, fin.in);
+    // allocate memory to contain file data
+    UCHAR* buffer = new UCHAR[size];
+    // get file data
+    pbuf->sgetn(reinterpret_cast<char *>(buffer), size);
+    fin.close();
+
+    std::ifstream fin_2(l_cs_File_2);
+    // get pointer to associated buffer object
+    std::filebuf* pbuf_2 = fin_2.rdbuf();
+    // get file size using buffer's members
+    std::size_t size_2 = pbuf_2->pubseekoff(0, fin_2.end, fin_2.in);
+    printf("\n size: %d \n", (int)size_2);
+    pbuf_2->pubseekpos(0, fin_2.in);
+    // allocate memory to contain file data
+    UCHAR* buffer_2 = new UCHAR[size_2];
+    // get file data
+    pbuf_2->sgetn(reinterpret_cast<char *>(buffer_2), size_2);
+    fin_2.close();
+
+
+    sendVerifyMatch(deviceData, pipeid, buffer, (short)size, buffer_2, (short)size_2);
+
+    //close reading
+    WaitForSingleObject(myhandleB, INFINITE);
+    CloseHandle(myhandleB);
+}
 
 VOID testWinusbFINGER(DEVICE_DATA deviceData, PIPE_ID pipeid) {
 
@@ -1981,6 +2140,17 @@ VOID processILV(UCHAR * buffer, int size, int offset, BOOL *imageProcessed, BOOL
         {
             ILVCommand = code;
             printf("Final Verify Reply received\n");
+            processVerifyReply(buffer, offset);
+            *imageProcessed = TRUE;
+            *pckProcessed = TRUE;
+            //*itemProcessed = TRUE;//exit Winusb reading loop
+            return;
+        }
+
+        if (code == 0x23)// Verify Match Reply command
+        {
+            ILVCommand = code;
+            printf("Final Verify Match Reply received\n");
             processVerifyReply(buffer, offset);
             *imageProcessed = TRUE;
             *pckProcessed = TRUE;
