@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" ?>
+  <dpinst>
+
+	<search> 
+      <subDirectory>*</subDirectory> 
+    </search>
+	
+    <!-- English -->
+    <language code="0x0409">
+      <dpinstTitle>ZyTrust Fingerprint Driver Installation</dpinstTitle>
+      <welcomeTitle>Welcome</welcomeTitle>
+      <welcomeIntro>Welcome to the ZyTrust Fingerprint Driver Setup program.  This program will install the ZyTrust Fingerprint Driver on your computer. </welcomeIntro>
+      <eulaHeaderTitle>Review the terms of the license agreement</eulaHeaderTitle>
+      <eulaYesButton>I accept this agreement</eulaYesButton>
+      <eulaNoButton>I do not accept this agreement</eulaNoButton>
+      <installHeaderTitle>Please wait while Setup finishes installing the driver.</installHeaderTitle>
+      <finishTitle>Setup complete</finishTitle>
+      <finishText>Setup has finished installing the ZyTrust Fingerprint driver.</finishText>
+      <eula type="rtf" path="SynaEula.rtf"/>
+    </language>
+
+    <icon>SynapticsLogo.ico</icon>
+    <headerPath>Logo-ZYTRUST.png</headerPath>
+    <watermarkPath>dlgbmp.bmp</watermarkPath>
+    <legacyMode/>
+    <forceIfDriverIsNotBetter/>
+    <suppressAddRemovePrograms/>
+    <enableNotListedLanguages/>
+
+  </dpinst>
