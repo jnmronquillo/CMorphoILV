@@ -1803,7 +1803,7 @@ VOID processVerifyReply(UCHAR * buffer, int offset)
             printf("Finger is invalid.\n");
         }
         //Matching Score value 
-        offset += 1;
+        offset += 1;//(Verify reply); offset += 2; //(VerifyMatch reply)
         if (buffer[offset] == 0x56)//ID_MATCHING_SCORE (0x56)
         {
             offset += 2;
